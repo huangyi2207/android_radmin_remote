@@ -70,11 +70,11 @@ class MainActivity : ComponentActivity() {
                 while (true) {
                     val n = input.read(buffer)
                     if (n < 0) break
-                    if (output.size() + n > max) throw com.openrad.mobile.xray.ProfileImportException("JSON превышает 512 КБ")
+                    if (output.size() + n > max) throw com.openrad.mobile.xray.ProfileImportException("JSON 超过 512 KB")
                     output.write(buffer, 0, n)
                 }
                 output.toString("UTF-8")
-            } ?: throw com.openrad.mobile.xray.ProfileImportException("Не удалось прочитать файл")
+            } ?: throw com.openrad.mobile.xray.ProfileImportException("无法读取文件")
         }
     }
     private val vpnConsent = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {

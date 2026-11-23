@@ -19,6 +19,7 @@ android {
         manifestPlaceholders["appLabel"] = "@string/app_name"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk { abiFilters += "arm64-v8a" }
         vectorDrawables {
             useSupportLibrary = true
         }

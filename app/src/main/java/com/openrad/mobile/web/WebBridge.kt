@@ -76,7 +76,7 @@ class WebBridge(
     private fun ensureStopped() {
         if (EngineHost.engine?.isRunning == true || EngineHost.sessionBusy ||
             com.openrad.mobile.xray.XrayRuntime.phase in setOf("READY", "STARTING", "STOPPING")) {
-            throw com.openrad.mobile.xray.ProfileImportException("Сначала отключите VPN, затем меняйте профиль или proxy")
+            throw com.openrad.mobile.xray.ProfileImportException("请先断开 VPN，再更改配置文件或代理")
         }
     }
 
@@ -170,7 +170,7 @@ class WebBridge(
             if (transport == null || (config.mode == "XRAY" &&
                     EngineHost.state.value.phase != com.openrad.mobile.engine.EngineState.Phase.ONLINE))
                 JSONObject().put("requiresConnect", true)
-                    .put("message", "Сохраните выбранный профиль и дождитесь CONNECTED на Главной. Затем проверьте PING до ПК.")
+                    .put("message", "请保存所选配置文件，等待主页显示 CONNECTED，然后检查到电脑的 PING。")
             else if (config.mode == "XRAY") {
                 // A SOCKS CONNECT reply alone does not prove the remote Reality handshake.
                 // The existing authenticated OpenRad control session proves that path instead.

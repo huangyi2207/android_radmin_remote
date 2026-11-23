@@ -10,23 +10,23 @@
   const pickerRows=new Map();
   const urgent=new Map(), completedBatches=new Set();
   const errors = {
-    BATCH_BUSY:'Дождитесь завершения общего действия или отмените его.', INVALID_COMMAND:'Некорректная команда или список ПК.', INVALID_URL:'Введите адрес сайта с http:// или https://.', INVALID_FILE:'Не удалось прочитать выбранный файл.', FILE_TOO_LARGE:'Файл превышает 200 МБ.', FILE_REQUIRED:'Сначала выберите файл.', CANCELLED:'Действие отменено.',
-    VPN_REQUIRED:'Сначала подключите VPN и дождитесь готовности интерфейса.', PEER_NOT_CONNECTED:'ПК недоступен через Radmin.',
-    CREDENTIALS_REQUIRED:'Откройте «Настройки» → «Доступ к установленному Veyon» и сохраните ключ или учётную запись Windows.',
-    AUTH_METHOD_UNAVAILABLE:'Проверьте способ входа в Veyon Configurator.', AUTH_FAILED:'Veyon не принял данные входа.',
-    ACCESS_DENIED:'Veyon отклонил доступ. Проверьте правила доступа или запрос подтверждения на ПК.',
-    NOT_VEYON:'На этом порту нет совместимого Veyon Server. Проверьте службу и порт 11100.',
-    CONNECTION_FAILED:'Соединение с Veyon закрыто или недоступно. Проверьте службу, порт и брандмауэр ПК.',
-    MEMORY_LIMIT:'Недостаточно памяти для разрешения этого экрана.', SCREEN_TOO_LARGE:'Разрешение экрана превышает лимит клиента.',
-    CLOSE_SESSIONS_FIRST:'Сначала закройте удалённый экран, затем меняйте доступ.',
-    INVALID_KEY:'Нужен приватный RSA-ключ Veyon в PEM PKCS#1 / PKCS#8 без пароля файла.',
-    INVALID_SETTINGS:'Проверьте настройки: интервал 250–60000 мс, ширина 160–480, качество 25–80%.',
-    SESSION_NOT_READY:'Экран ещё не подключён или уже закрыт.', CONTROL_REQUIRED:'Сначала включите управление выбранным ПК.',
-    INVALID_MESSAGE:'Veyon прислал неподдерживаемое сообщение протокола.', INVALID_RECTANGLE:'Некорректный размер области экрана.',
-    UNSUPPORTED_ENCODING:'Неподдерживаемое кодирование экрана.', INVALID_ZLIB:'Не удалось распаковать кадр.',
-    UNSUPPORTED_MESSAGE:'Неподдерживаемое сообщение Veyon.', INVALID_INPUT:'Некорректное событие ввода.', SETTINGS_SAVE_FAILED:'Не удалось сохранить настройки.'
+    BATCH_BUSY:'请等待批量操作完成，或取消它。', INVALID_COMMAND:'命令或电脑列表不正确。', INVALID_URL:'请输入以 http:// 或 https:// 开头的网站地址。', INVALID_FILE:'无法读取所选文件。', FILE_TOO_LARGE:'文件超过 200 MB。', FILE_REQUIRED:'请先选择文件。', CANCELLED:'操作已取消。',
+    VPN_REQUIRED:'请先连接 VPN，并等待接口就绪。', PEER_NOT_CONNECTED:'电脑无法通过 Radmin 访问。',
+    CREDENTIALS_REQUIRED:'打开“设置”→“已安装 Veyon 的访问权限”，保存密钥或 Windows 帐户。',
+    AUTH_METHOD_UNAVAILABLE:'请检查 Veyon Configurator 中的登录方式。', AUTH_FAILED:'Veyon 未接受登录信息。',
+    ACCESS_DENIED:'Veyon 拒绝访问。请检查访问规则或电脑上的确认请求。',
+    NOT_VEYON:'该端口上没有兼容的 Veyon Server。请检查服务和 11100 端口。',
+    CONNECTION_FAILED:'与 Veyon 的连接已关闭或不可用。请检查服务、端口和电脑防火墙。',
+    MEMORY_LIMIT:'内存不足，无法显示该分辨率的屏幕。', SCREEN_TOO_LARGE:'屏幕分辨率超过客户端上限。',
+    CLOSE_SESSIONS_FIRST:'请先关闭远程屏幕，再更改访问权限。',
+    INVALID_KEY:'需要 PEM 格式的 Veyon 私有 RSA 密钥（PKCS#1 / PKCS#8，无文件密码）。',
+    INVALID_SETTINGS:'请检查设置：间隔 250–60000 毫秒，宽度 160–480，质量 25–80%。',
+    SESSION_NOT_READY:'屏幕尚未连接或已关闭。', CONTROL_REQUIRED:'请先为所选电脑启用控制。',
+    INVALID_MESSAGE:'Veyon 发来了不受支持的协议消息。', INVALID_RECTANGLE:'屏幕区域尺寸不正确。',
+    UNSUPPORTED_ENCODING:'不支持的屏幕编码。', INVALID_ZLIB:'无法解压画面帧。',
+    UNSUPPORTED_MESSAGE:'不支持的 Veyon 消息。', INVALID_INPUT:'输入事件不正确。', SETTINGS_SAVE_FAILED:'无法保存设置。'
   };
-  function errorText(value){return errors[String(value||'').replace(/^VEYON:/,'')]||'Не удалось выполнить операцию Veyon. Проверьте настройки доступа.';}
+  function errorText(value){return errors[String(value||'').replace(/^VEYON:/,'')]||'无法执行 Veyon 操作。请检查访问设置。';}
   async function call(method,args={}){try{return await api.call(method,args);}catch(e){throw new Error(errorText(e.message));}}
   function act(fn){return api.action(fn);}
   function text(tag,value,cls){const n=document.createElement(tag);n.textContent=value;if(cls)n.className=cls;return n;}
@@ -38,7 +38,7 @@
   function renderPicker(){
     const busy=batchStarting||batchState.phase==='RUNNING',query=$('computerPickerSearch').value.trim().toLocaleLowerCase();
     const peers=pickerPeers(),known=new Set(peers.map(p=>p.id));
-    $('computerPickerSummary').textContent='ПК · '+visiblePeers().length+' ▾';
+    $('computerPickerSummary').textContent='电脑 · '+visiblePeers().length+' ▾';
     for(const[id,row]of pickerRows)if(!known.has(id)){row.label.remove();pickerRows.delete(id);}
     for(const p of peers){let row=pickerRows.get(p.id);if(!row){const label=text('label','','picker-option'),input=document.createElement('input'),name=text('span',p.name);
       input.type='checkbox';input.setAttribute('aria-label',p.name);input.onchange=()=>{
@@ -105,12 +105,12 @@
     const identity=s.vpnReady?s.ip:null;
     if(identity!==lastIdentity){urgent.clear();lastIdentity=identity;for(const c of cards.values())clearImage(c);updateGrid(true);}
     const networks=s.networks||[],select=$('classNetwork'),opts=JSON.stringify(networks.map(n=>[n.id,n.name]));
-    if(select.dataset.options!==opts){const value=select.value;select.replaceChildren(new Option('Все сети',''),...networks.map(n=>new Option(n.name,n.id)));if([...select.options].some(o=>o.value===value))select.value=value;select.dataset.options=opts;}
+    if(select.dataset.options!==opts){const value=select.value;select.replaceChildren(new Option('全部网络',''),...networks.map(n=>new Option(n.name,n.id)));if([...select.options].some(o=>o.value===value))select.value=value;select.dataset.options=opts;}
     const peers=s.peers||[],shown=new Set(visiblePeers().map(p=>p.id)),known=new Set(peers.map(p=>p.id));
     for(const[id,c]of cards)if(!known.has(id)){c.card.remove();cards.delete(id);}
     for(const p of peers){let c=cards.get(p.id);if(!c){c=makeCard(p);cards.set(p.id,c);$('peerList').append(c.card);}if(c.ip!==p.ip){clearImage(c);c.ip=p.ip;}
       c.card.hidden=!shown.has(p.id);c.name.textContent=p.name;c.card.classList.toggle('offline',p.state!=='CONNECTED');
-      c.card.setAttribute('aria-label',p.name+(p.state==='CONNECTED'?'':' · недоступен'));c.card.title=p.name;
+      c.card.setAttribute('aria-label',p.name+(p.state==='CONNECTED'?'':' · 不可用'));c.card.title=p.name;
     }
     if(current){const session=validSession(current.id);if(session){current=session;control=session.control===true;
       if(wantControl&&session.phase==='VIEWING'&&session.hasFrame){wantControl=false;act(async()=>{await call('Remote.control',{id:session.id,enabled:true});if(current?.id===session.id){control=true;current.control=true;updateViewer();}});}
@@ -120,8 +120,8 @@
   }
   function showMenu(rid){menuPeer=rid;updateMenu();$('computerMenu').hidden=false;$('computerCancel').focus();}
   function closeMenu(){const id=menuPeer;menuPeer=null;$('computerMenu').hidden=true;cards.get(id)?.card.focus({preventScroll:true});}
-  function updateMenu(){const p=state.peers.find(p=>p.id===menuPeer);$('computerTitle').textContent=p?.name||'Компьютер';
-    $('computerStatus').textContent=p?.state==='CONNECTED'?'':'ПК недоступен';
+  function updateMenu(){const p=state.peers.find(p=>p.id===menuPeer);$('computerTitle').textContent=p?.name||'电脑';
+    $('computerStatus').textContent=p?.state==='CONNECTED'?'':'电脑不可用';
     for(const id of ['computerView','computerControl','computerLock','computerUnlock'])$(id).disabled=!state.vpnReady||p?.state!=='CONNECTED';}
   let wantControl=false;
   async function openPeer(rid,enableControl){
@@ -135,7 +135,7 @@
     const rid=menuPeer;closeMenu();
     // Keep reading actual images during and after lock; a command is never a fake screenshot.
     await call('Remote.lock',{rid,enabled});refreshPeer(rid);updateGrid(true);
-    api.toast(enabled?'Команда блокировки отправлена.':'Команда разблокировки отправлена.');
+    api.toast(enabled?'锁定命令已发送。':'解锁命令已发送。');
   });
   $('computerCancel').onclick=closeMenu;
   $('computerMenu').onclick=e=>{if(e.target===$('computerMenu'))closeMenu();};
@@ -148,9 +148,9 @@
   function updateViewer(){
     if(!current)return;
     $('viewerTitle').textContent=current.name+' · '+current.ip;
-    $('viewerStatus').textContent=current.error?errorText(current.error):current.phase==='CONNECTING'?'Подключение к Veyon…':current.phase==='STOPPED'?'Экран отключён':control?'УПРАВЛЕНИЕ · мышь и клавиатура активны':'ТОЛЬКО ПРОСМОТР';
-    $('toggleControl').textContent=control?'Выключить управление':'Включить управление';$('toggleControl').disabled=current.phase!=='VIEWING'||!current.hasFrame;
-    $('viewerStage').classList.toggle('control',control);$('viewerEmpty').hidden=!!current.hasFrame;$('viewerEmpty').textContent=current.error?errorText(current.error):current.phase==='STOPPED'?'Экран отключён':'Ожидание первого кадра…';
+    $('viewerStatus').textContent=current.error?errorText(current.error):current.phase==='CONNECTING'?'正在连接 Veyon…':current.phase==='STOPPED'?'屏幕已断开':control?'控制中 · 鼠标和键盘已启用':'仅查看';
+    $('toggleControl').textContent=control?'关闭控制':'启用控制';$('toggleControl').disabled=current.phase!=='VIEWING'||!current.hasFrame;
+    $('viewerStage').classList.toggle('control',control);$('viewerEmpty').hidden=!!current.hasFrame;$('viewerEmpty').textContent=current.error?errorText(current.error):current.phase==='STOPPED'?'屏幕已断开':'等待第一帧…';
     $('remoteText').disabled=!control;document.querySelectorAll('[data-remote-key],[data-wheel],#rightClick,#remoteTextForm button').forEach(b=>b.disabled=!control);
     if(!current.hasFrame){$('viewerImage').hidden=true;$('viewerImage').removeAttribute('src');}
   }
@@ -188,7 +188,7 @@
     if(!selectionLoaded){displayAll=c.displayAll!==false;displayIds=new Set(c.displayIds||[]);selectionLoaded=true;}const f=$('remoteForm').elements;
     for(const k of ['mode','port','username','keyName','refreshMs','thumbnailWidth','jpegQuality','network'])if(c[k]!=null)f[k].value=c[k];
     f.onlineOnly.checked=c.onlineOnly!==false;f.password.value='';
-    $('remoteCredentialsState').textContent=`Ключ: ${c.hasKey?'сохранён':'не импортирован'} · Пароль: ${c.hasPassword?'сохранён':'не задан'}`;
+    $('remoteCredentialsState').textContent=`密钥：${c.hasKey?'已保存':'未导入'} · 密码：${c.hasPassword?'已保存':'未设置'}`;
     render(state);updateGrid(true);
   }
   $('remoteForm').onsubmit=e=>{e.preventDefault();act(async()=>{const f=e.target.elements,args={};
@@ -196,11 +196,11 @@
     for(const k of ['port','refreshMs','thumbnailWidth','jpegQuality'])args[k]=Number(f[k].value);
     args.onlineOnly=f.onlineOnly.checked;args.clearPassword=f.clearPassword.checked;args.clearKey=f.clearKey.checked;f.password.value='';
     const c=await call('Remote.saveConfig',args);f.clearPassword.checked=f.clearKey.checked=false;
-    for(const c of cards.values()){c.at=0;c.retry=0;}settings(c);api.toast('Настройки класса сохранены.');
+    for(const c of cards.values()){c.at=0;c.retry=0;}settings(c);api.toast('课堂设置已保存。');
   });};
-  $('importVeyonKey').onclick=()=>act(async()=>{const c=await call('Remote.importKey');if(!c.cancelled){settings(c);api.toast('Приватный ключ сохранён. Проверьте имя ключа и сохраните настройки.');}});
+  $('importVeyonKey').onclick=()=>act(async()=>{const c=await call('Remote.importKey');if(!c.cancelled){settings(c);api.toast('私钥已保存。请检查密钥名称并保存设置。');}});
   function loadThumbnail(p,token){return new Promise(resolve=>{
-    const c=cards.get(p.id),loader=new Image();loader.alt='Экран '+p.name;loader.draggable=false;let done=false;
+    const c=cards.get(p.id),loader=new Image();loader.alt='屏幕 '+p.name;loader.draggable=false;let done=false;
     const timeout=setTimeout(()=>finish(false),17000);
     const job={cancel:()=>{loader.removeAttribute('src');finish(false);}};
     function finish(ok){if(done)return;done=true;clearTimeout(timeout);loader.onload=loader.onerror=null;if(activeLoad===job)activeLoad=null;
@@ -219,36 +219,36 @@
       for(let n=0;n<peers.length;n++){const p=peers[cursor++%peers.length],c=cards.get(p.id);if(c&&now>=c.retry&&(!c.at||now-c.at>=config.refreshMs)){await loadThumbnail(p,gridToken);break;}}
     }}finally{setTimeout(pump,60);}
   }
-  const actionLabels={shutdown:'Выключить',reboot:'Перезагрузить',lock:'Заблокировать',unlock:'Разблокировать',website:'Открыть сайт',file:'Передать файл'};
+  const actionLabels={shutdown:'关机',reboot:'重启',lock:'锁定',unlock:'解锁',website:'打开网站',file:'传输文件'};
   function renderBatch(){
     renderPicker();
     const running=batchState.phase==='RUNNING',available=state.vpnReady&&visiblePeers().some(p=>p.state==='CONNECTED');
     document.querySelectorAll('[data-batch]').forEach(b=>b.disabled=!available||running||batchStarting);
-    const progress=$('batchProgressButton');progress.hidden=!batchState.id;progress.textContent=(running?'Выполняется ':'Результат ')+(batchState.completed||0)+'/'+(batchState.total||0);
+    const progress=$('batchProgressButton');progress.hidden=!batchState.id;progress.textContent=(running?'执行中 ':'结果 ')+(batchState.completed||0)+'/'+(batchState.total||0);
     if(!progressOpen)return;
-    $('batchTitle').textContent=actionLabels[batchState.action]||'Общее действие';
-    $('batchStatus').textContent=(running?'Отправка: '+(batchState.current||'ожидание')+(batchState.bytes?' · '+Math.round(batchState.bytes/1024)+' КБ':''):
-      batchState.phase==='CANCELLED'?'Остановлено.':'Отправка завершена.')+` · Отправлено ${batchState.sent||0} из ${batchState.total||0}`;
-    $('batchSubmit').hidden=true;$('batchCancel').textContent=running?'Остановить':'Закрыть';
-    $('batchResults').replaceChildren(...(batchState.results||[]).map(r=>text('p',r.name+' · '+(r.status==='SENT'?'команда отправлена':errorText(r.error)),r.status==='SENT'?'':'failed')));
+    $('batchTitle').textContent=actionLabels[batchState.action]||'通用操作';
+    $('batchStatus').textContent=(running?'发送中：'+(batchState.current||'等待中')+(batchState.bytes?' · '+Math.round(batchState.bytes/1024)+' KB':''):
+      batchState.phase==='CANCELLED'?'已停止。':'发送完成。')+` · 已发送 ${batchState.sent||0} / ${batchState.total||0}`;
+    $('batchSubmit').hidden=true;$('batchCancel').textContent=running?'停止':'关闭';
+    $('batchResults').replaceChildren(...(batchState.results||[]).map(r=>text('p',r.name+' · '+(r.status==='SENT'?'命令已发送':errorText(r.error)),r.status==='SENT'?'':'failed')));
   }
   function showBatch(action){
     batchTargets=visiblePeers().map(p=>({id:p.id,name:p.name}));
-    if(!batchTargets.length){api.toast('Нет доступных отображаемых ПК.');return;}
+    if(!batchTargets.length){api.toast('没有可用的显示电脑。');return;}
     batchAction=action;progressOpen=false;batchFile=null;
-    $('batchTitle').textContent=actionLabels[action]+(action==='website'?' на ПК':'');
-    $('batchTargets').textContent=`Для ${batchTargets.length} отображаемых ПК: `+batchTargets.map(p=>p.name).join(', ');
+    $('batchTitle').textContent=actionLabels[action]+(action==='website'?'（在电脑上）':'');
+    $('batchTargets').textContent=`针对 ${batchTargets.length} 台显示的电脑：`+batchTargets.map(p=>p.name).join(', ');
     $('batchUrlField').hidden=action!=='website';$('batchUrl').required=action==='website';$('batchUrl').value='';
-    $('batchFileField').hidden=action!=='file';$('batchFileInfo').textContent='Файл не выбран · до 200 МБ';
-    $('batchStatus').textContent=action==='file'?'Папка получения задаётся в Veyon на ПК. Существующие файлы не перезаписываются.':'';
+    $('batchFileField').hidden=action!=='file';$('batchFileInfo').textContent='未选择文件 · 不超过 200 MB';
+    $('batchStatus').textContent=action==='file'?'接收文件夹在电脑上的 Veyon 中设置。现有文件不会被覆盖。':'';
     $('batchResults').replaceChildren();$('batchSubmit').hidden=false;$('batchSubmit').disabled=action==='file';$('batchSubmit').textContent=actionLabels[action];
-    $('batchCancel').textContent='Отмена';$('batchDialog').hidden=false;
+    $('batchCancel').textContent='取消';$('batchDialog').hidden=false;
     if(action==='website')$('batchUrl').focus();else $('batchCancel').focus();
   }
   document.querySelectorAll('[data-batch]').forEach(b=>b.onclick=()=>showBatch(b.dataset.batch));
   $('chooseBatchFile').onclick=()=>act(async()=>{
     batchPicking=true;await setGrid(false);$('chooseBatchFile').disabled=true;
-    try{const f=await call('Remote.chooseFile');if(!f.cancelled){batchFile=f;$('batchFileInfo').textContent=f.name+(f.size>=0?' · '+Math.round(f.size/1024)+' КБ':'');$('batchSubmit').disabled=false;}}
+    try{const f=await call('Remote.chooseFile');if(!f.cancelled){batchFile=f;$('batchFileInfo').textContent=f.name+(f.size>=0?' · '+Math.round(f.size/1024)+' KB':'');$('batchSubmit').disabled=false;}}
     finally{batchPicking=false;$('chooseBatchFile').disabled=false;updateGrid(true);}
   });
   $('batchForm').onsubmit=e=>{e.preventDefault();if(batchStarting)return;act(async()=>{

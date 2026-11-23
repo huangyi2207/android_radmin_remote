@@ -47,12 +47,12 @@ class XrayProfile(
     companion object {
         private fun text(o: JSONObject, key: String, max: Int = 253): String = o.optString(key, "").also {
             if (it.isEmpty() || it.length > max || it.any { c -> c.isISOControl() || c.isWhitespace() })
-                throw ProfileImportException("Некорректное поле профиля: $key")
+                throw ProfileImportException("配置文件字段不正确：$key")
         }
         private fun optionalText(o: JSONObject, key: String, max: Int): String {
             val value = o.opt(key) ?: return ""
             if (value !is String || value.length > max || value.any { it.isISOControl() || it.isWhitespace() })
-                throw ProfileImportException("Некорректное поле профиля: $key")
+                throw ProfileImportException("配置文件字段不正确：$key")
             return value
         }
         fun restore(o: JSONObject): XrayProfile {
@@ -60,30 +60,30 @@ class XrayProfile(
             val name = o.optString("name", "VLESS TCP").take(120).filterNot { it.isISOControl() }
             val host = text(o, "host")
             val port = o.optInt("port", 0)
-            if (port !in 1..65535) throw ProfileImportException("Некорректный порт сервера")
+            if (port !in 1..65535) throw ProfileImportException("服务器端口不正确")
             val uuid = text(o, "uuid", 36)
             if (!Regex("[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}").matches(uuid))
-                throw ProfileImportException("Некорректный UUID сервера")
+                throw ProfileImportException("服务器 UUID 不正确")
             val network = o.optString("network", "tcp")
-            if (network !in setOf("tcp", "grpc")) throw ProfileImportException("Этот транспорт пока не поддерживается")
+            if (network !in setOf("tcp", "grpc")) throw ProfileImportException("暂不支持该传输方式")
             val flow = o.optString("flow", "")
-            if (flow !in setOf("", "xtls-rprx-vision")) throw ProfileImportException("Этот flow пока не поддерживается")
-            if (network == "grpc" && flow.isNotEmpty()) throw ProfileImportException("gRPC требует пустой flow")
+            if (flow !in setOf("", "xtls-rprx-vision")) throw ProfileImportException("暂不支持该 flow")
+            if (network == "grpc" && flow.isNotEmpty()) throw ProfileImportException("gRPC 要求 flow 为空")
             val serviceName = optionalText(o, "serviceName", 1024)
             val authority = optionalText(o, "authority", 253)
             val multiMode = o.opt("multiMode")?.let {
-                it as? Boolean ?: throw ProfileImportException("Некорректный gRPC multiMode")
+                it as? Boolean ?: throw ProfileImportException("gRPC multiMode 不正确")
             } ?: false
             val sni = text(o, "sni")
             val key = text(o, "publicKey", 44)
             val keyBytes = try { Base64.getUrlDecoder().decode(key) } catch (_: Exception) { ByteArray(0) }
-            if (keyBytes.size != 32) throw ProfileImportException("Некорректный Reality public key")
+            if (keyBytes.size != 32) throw ProfileImportException("Reality 公钥不正确")
             val sid = o.optString("shortId", "")
             if (sid.length > 16 || sid.length % 2 != 0 || !Regex("[0-9a-fA-F]*").matches(sid))
-                throw ProfileImportException("Некорректный Reality short ID")
+                throw ProfileImportException("Reality short ID 不正确")
             val fp = o.optString("fingerprint", "chrome")
             if (fp !in setOf("chrome", "firefox", "safari", "edge", "ios", "android", "random", "randomized", "360", "qq"))
-                throw ProfileImportException("Этот fingerprint пока не поддерживается")
+                throw ProfileImportException("暂不支持该 fingerprint")
             return XrayProfile(id, name.ifEmpty { "VLESS TCP" }, host, port, uuid, flow, sni, key, sid, fp, network, serviceName, authority, multiMode)
         }
         fun fromOutbound(o: JSONObject): XrayProfile {
@@ -91,7 +91,7 @@ class XrayProfile(
             val reality = stream.getJSONObject("realitySettings")
             val network = if (stream.optString("network", "tcp") == "grpc") "grpc" else "tcp"
             if (network == "grpc" && stream.has("grpcSettings") && stream.opt("grpcSettings") !is JSONObject)
-                throw ProfileImportException("Некорректный gRPC grpcSettings")
+                throw ProfileImportException("gRPC grpcSettings 不正确")
             val grpc = if (network == "grpc") stream.optJSONObject("grpcSettings") ?: JSONObject() else JSONObject()
             // Xray uses multiMode. Happ exports mode:false for ordinary gRPC.
             val multiMode = when {
@@ -100,15 +100,15 @@ class XrayProfile(
                 grpc.opt("mode") is Boolean -> grpc.getBoolean("mode")
                 grpc.optString("mode") == "multi" -> true
                 grpc.optString("mode") == "gun" -> false
-                else -> throw ProfileImportException("Неподдерживаемый gRPC mode")
+                else -> throw ProfileImportException("不支持的 gRPC mode")
             }
             val vnext = o.getJSONObject("settings").getJSONArray("vnext")
-            if (vnext.length() != 1) throw ProfileImportException("Ожидается один сервер в профиле")
+            if (vnext.length() != 1) throw ProfileImportException("配置文件中应只有一个服务器")
             val server = vnext.getJSONObject(0)
             val users = server.getJSONArray("users")
-            if (users.length() != 1) throw ProfileImportException("Ожидается один пользователь в профиле")
+            if (users.length() != 1) throw ProfileImportException("配置文件中应只有一个用户")
             val user = users.getJSONObject(0)
-            if (user.optString("encryption", "none") != "none") throw ProfileImportException("Неподдерживаемое VLESS encryption")
+            if (user.optString("encryption", "none") != "none") throw ProfileImportException("不支持的 VLESS encryption")
             return restore(JSONObject().put("id", UUID.randomUUID().toString()).put("name", o.optString("tag", "VLESS TCP"))
                 .put("host", server.getString("address")).put("port", server.getInt("port"))
                 .put("network", network).put("serviceName", grpc.opt("serviceName") ?: "")
@@ -126,10 +126,10 @@ object XrayImport {
     const val MAX_BYTES = 512 * 1024
     data class Result(val profiles: List<XrayProfile>, val skipped: Int)
     fun parse(raw: String): Result {
-        if (raw.toByteArray(Charsets.UTF_8).size > MAX_BYTES) throw ProfileImportException("JSON превышает 512 КБ")
+        if (raw.toByteArray(Charsets.UTF_8).size > MAX_BYTES) throw ProfileImportException("JSON 超过 512 KB")
         val outbounds = try { JSONObject(raw).getJSONArray("outbounds") }
-            catch (_: Exception) { throw ProfileImportException("Нужен JSON Xray с массивом outbounds") }
-        if (outbounds.length() > 256) throw ProfileImportException("Слишком много записей outbounds")
+            catch (_: Exception) { throw ProfileImportException("需要包含 outbounds 数组的 Xray JSON") }
+        if (outbounds.length() > 256) throw ProfileImportException("outbounds 条目过多")
         val profiles = ArrayList<XrayProfile>()
         var skipped = 0
         for (i in 0 until outbounds.length()) {
@@ -142,11 +142,11 @@ object XrayImport {
             }
             // Reject malformed supported nodes instead of silently replacing an existing import.
             val p = try { XrayProfile.fromOutbound(o) } catch (e: ProfileImportException) { throw e }
-                catch (_: Exception) { throw ProfileImportException("В VLESS + Reality профиле не хватает обязательных полей") }
+                catch (_: Exception) { throw ProfileImportException("VLESS + Reality 配置缺少必填字段") }
             profiles.add(p)
-            if (profiles.size > 32) throw ProfileImportException("Можно импортировать не более 32 профилей")
+            if (profiles.size > 32) throw ProfileImportException("最多可导入 32 个配置文件")
         }
-        if (profiles.isEmpty()) throw ProfileImportException("Нет поддерживаемых VLESS + Reality профилей (TCP / gRPC).")
+        if (profiles.isEmpty()) throw ProfileImportException("没有受支持的 VLESS + Reality 配置（TCP / gRPC）。")
         return Result(profiles, skipped)
     }
 }
