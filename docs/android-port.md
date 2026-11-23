@@ -64,7 +64,7 @@ Interface: `addAddress(VIP, 8)`, `addRoute(26.0.0.0, 8)`, MTU 1500, sem DNS e se
 
 ```sh
 OPENRAD_EMULATOR=1 ./gradlew :app:testDebugUnitTest --tests '*EmulatorHarnessTest*' --rerun -i &
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/debug/app-universal-debug.apk
 adb shell run-as com.openrad.mobile.debug mkdir -p files
 adb shell run-as com.openrad.mobile.debug sh -c 'cat > files/debug-endpoint.json' < app/build/emulator-endpoint.json
 adb shell appops set com.openrad.mobile.debug ACTIVATE_VPN allow   # só no emulador; num aparelho, aceite o diálogo

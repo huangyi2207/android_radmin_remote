@@ -27,22 +27,25 @@ Pré-requisitos: **JDK 17** e internet (o script baixa o SDK; o Gradle baixa as 
 ./scripts/build.sh
 
 # APK gerado em:
-#   app/build/outputs/apk/debug/app-debug.apk
+#   app/build/outputs/apk/debug/app-universal-debug.apk
 ```
+
+O build gera cinco APKs: `arm64-v8a`, `armeabi-v7a`, `x86_64`, `x86` e `universal` (todas as quatro ABIs). Os arquivos por ABI ficam em `app/build/outputs/apk/debug/app-<ABI>-debug.apk`. O script verifica as bibliotecas JNI de cada APK.
 
 Instalar no aparelho/emulador:
 
 ```sh
 ./scripts/install-debug.sh
 # ou manual:
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/debug/app-universal-debug.apk
 ```
 
 Build de release (assinado só quando você fornece uma chave mantida fora do repositório):
 
 ```sh
 ./gradlew :app:assembleRelease -Popenrad.signingProperties=/caminho/para/signing.properties
-# app/build/outputs/apk/release/app-release.apk (pacote com.openrad.mobile)
+# app/build/outputs/apk/release/app-universal-release.apk (universal)
+# app/build/outputs/apk/release/app-<ABI>-release.apk (por ABI)
 ```
 
 O arquivo de propriedades contém `storeFile`, `storePassword`, `keyAlias` e

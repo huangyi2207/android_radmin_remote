@@ -11,6 +11,7 @@ Official repository: https://github.com/XTLS/libXray
 - ZIP SHA-256: `aad01c82eb82e98702838f7b4ac3f33dba1ae5ff4102538e5ca7f05bbab57437`
 - Extracted `libXray.aar` SHA-256: `e2ca36b011f4c3fe65c23d3a49d0298591bb7aaf34e0a8e91e946e5e5bdbc3f5`
 - Packaged ABIs: arm64-v8a, armeabi-v7a, x86_64, x86.
+- Gradle emits one APK per ABI plus a universal APK containing all four. `scripts/verify-apk-abis.py` checks each APK's ABI set and nonempty `libgojni.so` entries before CI uploads or publishes it.
 - License: MIT, copied to APK assets/licenses/libXray-MIT.txt.
 - The AAR is unmodified and fetched automatically by scripts/setup-xray.py. It is not committed to this repository. The app contains no second independently compiled Go runtime.
 

@@ -19,7 +19,6 @@ android {
         manifestPlaceholders["appLabel"] = "@string/app_name"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        ndk { abiFilters += "arm64-v8a" }
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -56,6 +55,14 @@ android {
         }
         debug {
             applicationIdSuffix = ".debug"
+        }
+    }
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
+            isUniversalApk = true
         }
     }
     compileOptions {

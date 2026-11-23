@@ -22,13 +22,13 @@ Kotlin + Jetpack Compose (Material3) + Navigation Compose. Min SDK 26, target/co
 ./scripts/setup-android-sdk.sh     # uma vez; instala cmdline-tools + platform-34 + build-tools
 ./scripts/build.sh                 # ./gradlew :app:assembleDebug
 ./gradlew :app:testDebugUnitTest   # testes unitários headless (obrigatório antes de PR)
-./scripts/install-debug.sh         # adb install -r app-debug.apk
+./scripts/install-debug.sh         # adb install -r app-universal-debug.apk
 ./gradlew :app:lintDebug           # lint (quando disponível no CI)
 ```
 
 - Não commitar `local.properties`, `*.jks`, `build/`, `.gradle/`, `.idea/` (ver `.gitignore`).
 - JDK 17 obrigatório (`org.gradle.java.home` ou `JAVA_HOME`). Não usar Java 21 para AGP 8.5.
-- APK debug vai para `app/build/outputs/apk/debug/app-debug.apk`.
+- APKs debug vão para `app/build/outputs/apk/debug/app-<ABI>-debug.apk`: `arm64-v8a`, `armeabi-v7a`, `x86_64`, `x86` e `universal`. `install-debug.sh` instala `app-universal-debug.apk`.
 
 ## Estilo Kotlin/Compose
 

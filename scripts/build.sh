@@ -14,4 +14,4 @@ if [ ! -x ./gradlew ]; then
 fi
 
 ./gradlew :app:assembleDebug
-echo "APK: app/build/outputs/apk/debug/app-debug.apk"
+python3 scripts/verify-apk-abis.py app/build/outputs/apk/debug --build-type debug

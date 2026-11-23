@@ -6,7 +6,7 @@
 
 Android 8.0+（API 26）。支持 DIRECT、外部 SOCKS5，或从 Xray/Happ JSON 导入服务器。唯一的 VpnService 会创建一条路由为 `26.0.0.0/8`、MTU 1500 的 TUN。手机的其他互联网流量不会经过这条 TUN。
 
-> 汉化说明：本分支已完成中文汉化。新增 `app/src/main/res/values-zh/strings.xml`（174 条字符串），WebView 界面（`assets/www/index.html`、`app.js`、`classroom.js`）和 Kotlin 中的俄文报错信息已译为中文，设置中可选择中文（`zh`）。构建已配置为仅 arm64-v8a，见下文“构建”。
+> 汉化说明：本分支已完成中文汉化。新增 `app/src/main/res/values-zh/strings.xml`（174 条字符串），WebView 界面（`assets/www/index.html`、`app.js`、`classroom.js`）和 Kotlin 中的俄文报错信息已译为中文，设置中可选择中文（`zh`）。构建会生成四种 ABI 的独立 APK 和通用 APK，见下文“构建”。
 
 ## 稳定版应用 1.0.0
 
@@ -68,11 +68,21 @@ python3 scripts/setup-xray.py  # 官方 AAR，会校验 SHA-256
 ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-build-cache
 ```
 
-AAR 的下载也会由 Gradle 任务 `setupXray` 自动完成。AAR 不存放在 git 中；URL、版本和 SHA-256 已固定在脚本里。Android Studio 可直接打开项目根目录；Windows 使用 Python 3、curl 和 `gradlew.bat`。产物：`app/build/outputs/apk/debug/app-debug.apk`。要构建主 release 版本，请配置 OPENRAD_SIGNING_PROPERTIES 并执行 :app:assembleRelease。
+AAR 的下载也会由 Gradle 任务 `setupXray` 自动完成。AAR 不存放在 git 中；URL、版本和 SHA-256 已固定在脚本里。Android Studio 可直接打开项目根目录；Windows 使用 Python 3、curl 和 `gradlew.bat`。要构建签名的 release 版本，请配置 OPENRAD_SIGNING_PROPERTIES 并执行 `:app:assembleRelease`。
 
-本汉化分支的构建已配置为仅 arm64-v8a（`app/build.gradle.kts` 中 `ndk { abiFilters += "arm64-v8a" }`），产物为 arm64 版 APK，适用于 Redmi K70 等 arm64 设备。
+`assembleDebug` 和 `assembleRelease` 都通过 `splits.abi` 生成四种 ABI 的独立 APK，以及包含全部四种 ABI 的通用 APK。Debug 产物位于 `app/build/outputs/apk/debug/`：
 
-GitHub Actions 会构建 APK、运行 JVM 测试和 loopback 上的 native 冒烟测试，在配置好密钥后发布签名的正式版，并为开发提供 debug 产物。DEX 构建缓存已关闭：在 AGP 8.5 下，更换 native classpath 时本地曾出现过时的 R 类归档。增量 / up-to-date 检查仍然可用。
+| 版本 | Debug APK |
+| --- | --- |
+| arm64-v8a（如 Redmi K70） | `app-arm64-v8a-debug.apk` |
+| armeabi-v7a | `app-armeabi-v7a-debug.apk` |
+| x86_64 | `app-x86_64-debug.apk` |
+| x86 | `app-x86-debug.apk` |
+| 通用（包含上述四种 ABI） | `app-universal-debug.apk` |
+
+已签名的 release 产物位于 `app/build/outputs/apk/release/`，文件名为 `app-<ABI>-release.apk`，通用包为 `app-universal-release.apk`。未配置签名时，release 文件名带 `-unsigned`，不用于正式发布。`scripts/install-debug.sh` 默认安装通用 debug 包；也可手动安装设备对应的 ABI 包。
+
+GitHub Actions 会运行 JVM 测试和 loopback native 冒烟测试，并检查 5 个 APK 的 ABI 和 Xray JNI 库。`developer-debug-apks` 产物包含全部 5 个 debug 包，可在 Actions → Android APK → 对应运行 → Artifacts 下载。配置现有的 `ANDROID_RELEASE_SIGNING_B64` 密钥后，`android-radmin-remote-1.0.0` 产物和正式发布也包含 5 个签名包：架构专用包带 ABI 后缀，通用包保留 `android-radmin-remote-1.0.0.apk` 名称。未配置密钥时仍会上传全部 debug 包，但不会发布 release。DEX 构建缓存已关闭：在 AGP 8.5 下，更换 native classpath 时本地曾出现过时的 R 类归档。增量 / up-to-date 检查仍然可用。
 
 ## 检查与限制
 

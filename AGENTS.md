@@ -26,13 +26,13 @@ Run from `clients/android/`:
 ./scripts/setup-android-sdk.sh     # once; installs cmdline-tools + platform-34 + build-tools
 ./scripts/build.sh                 # ./gradlew :app:assembleDebug
 ./gradlew :app:testDebugUnitTest   # headless unit tests (required before PR)
-./scripts/install-debug.sh         # adb install -r app-debug.apk
+./scripts/install-debug.sh         # adb install -r app-universal-debug.apk
 ./gradlew :app:lintDebug           # lint (when available in CI)
 ```
 
 - Do not commit `local.properties`, `*.jks`, `build/`, `.gradle/`, `.idea/` (see `.gitignore`).
 - JDK 17 is required (`org.gradle.java.home` or `JAVA_HOME`). Do not use Java 21 for AGP 8.5.
-- Debug APK goes to `app/build/outputs/apk/debug/app-debug.apk`.
+- Debug APKs go to `app/build/outputs/apk/debug/app-<ABI>-debug.apk` for `arm64-v8a`, `armeabi-v7a`, `x86_64`, `x86`, and `universal`. `install-debug.sh` installs `app-universal-debug.apk`.
 
 ## Kotlin/Compose style
 

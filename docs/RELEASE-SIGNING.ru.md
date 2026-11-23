@@ -8,7 +8,7 @@
 2. New repository secret. Name: `ANDROID_RELEASE_SIGNING_B64`.
 3. Value: всё содержимое переданного владельцу файла `ANDROID_RELEASE_SIGNING_B64.txt` (одна строка). Add secret. Этот файл содержит приватный ключ и пароль в закодированном архиве; он не должен попадать в репозиторий, issue, логи или публичные файлы.
 4. Actions → Android APK → Run workflow → main. Либо следующий push в main запустит сборку.
-5. После тестов и native smoke публикуется `v1.0.0`, asset `android-radmin-remote-1.0.0.apk`. CI сверяет SHA-256 сертификата с публичным файлом в исходниках и не публикует APK с другим ключом.
+5. После тестов и native smoke публикуется `v1.0.0` с пятью APK: `android-radmin-remote-1.0.0-arm64-v8a.apk`, `android-radmin-remote-1.0.0-armeabi-v7a.apk`, `android-radmin-remote-1.0.0-x86_64.apk`, `android-radmin-remote-1.0.0-x86.apk` и универсальным `android-radmin-remote-1.0.0.apk`. CI проверяет состав JNI-библиотек и SHA-256 сертификата каждого APK; APK с другим ключом не публикуется.
 
 При отсутствии секрета CI явно пропускает публикацию основной версии. Автоматический новый release-ключ или debug-ключ вместо постоянного не генерируется.
 
@@ -16,7 +16,7 @@
 
 Владелец получает отдельно `radmin-release-signing-backup.zip`: release.jks, signing.json, release-cert.der, ANDROID_RELEASE_SIGNING_B64.txt и инструкцию. Храните эту копию приватно; для будущих обновлений требуется тот же ключ. ZIP и Base64 сами по себе не шифруют входящий в них пароль. Keystore зашифрован своим паролем, который включён в резервный комплект.
 
-Локальная сборка: создайте приватный properties-файл вне git с полями storeFile (абсолютный путь), storePassword, keyAlias, keyPassword. Задайте OPENRAD_SIGNING_PROPERTIES этим путём и запустите `./gradlew :app:assembleRelease --no-build-cache`. Результат app/build/outputs/apk/release/app-release.apk. Проверьте apksigner verify --print-certs и SHA-256 сертификата. Для release-варианта без signing properties Gradle может собрать unsigned APK; распространять его как основной нельзя.
+Локальная сборка: создайте приватный properties-файл вне git с полями storeFile (абсолютный путь), storePassword, keyAlias, keyPassword. Задайте OPENRAD_SIGNING_PROPERTIES этим путём и запустите `./gradlew :app:assembleRelease --no-build-cache`. Результаты: `app/build/outputs/apk/release/app-<ABI>-release.apk` для `arm64-v8a`, `armeabi-v7a`, `x86_64`, `x86` и `universal`. Универсальный APK — `app-universal-release.apk`. Проверьте каждый APK через apksigner verify --print-certs и SHA-256 сертификата. Без signing properties Gradle собирает unsigned APK с суффиксом `-unsigned`; распространять его как основной нельзя.
 
 Начиная с этой основной линии, следующие версии сохраняют package и сертификат и увеличивают versionCode. Не меняйте ключ для обычного обновления. Настройка подписи не добавляет Play Store, AUTO-балансировщик или Radmin Viewer.
 

@@ -64,9 +64,9 @@ python3 scripts/setup-xray.py  # официальный AAR, SHA-256 прове�
 ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-build-cache
 ```
 
-Загрузка AAR также автоматически выполняется Gradle task `setupXray`. AAR не хранится в git; URL, версия и SHA-256 зафиксированы в скрипте. Android Studio открывает корень проекта; Windows использует Python 3, curl и `gradlew.bat`. Результат: `app/build/outputs/apk/debug/app-debug.apk`. Для основной release-сборки настройте OPENRAD_SIGNING_PROPERTIES и выполните :app:assembleRelease.
+Загрузка AAR также автоматически выполняется Gradle task `setupXray`. AAR не хранится в git; URL, версия и SHA-256 зафиксированы в скрипте. Android Studio открывает корень проекта; Windows использует Python 3, curl и `gradlew.bat`. Каждая сборка создаёт APK для `arm64-v8a`, `armeabi-v7a`, `x86_64`, `x86` и универсальный APK со всеми четырьмя ABI. Debug-файлы: `app/build/outputs/apk/debug/app-<ABI>-debug.apk`; универсальный: `app-universal-debug.apk`. Для основной release-сборки настройте OPENRAD_SIGNING_PROPERTIES и выполните :app:assembleRelease; подписанные файлы находятся в `app/build/outputs/apk/release/app-<ABI>-release.apk`, включая `app-universal-release.apk`.
 
-GitHub Actions собирает APK, запускает JVM-тесты и native smoke test на loopback, публикует подписанный основной выпуск при настроенном секрете и debug-артефакт для разработки. DEX build cache отключён: при смене native classpath в AGP 8.5 локально наблюдались устаревшие архивы R-классов. Incremental/up-to-date проверки остаются доступны.
+GitHub Actions собирает все пять APK, проверяет ABI и наличие Xray JNI, запускает JVM-тесты и native smoke test на loopback. Артефакт `developer-debug-apks` содержит пять debug APK. При настроенном секрете публикуются пять подписанных APK; универсальный сохраняет имя `android-radmin-remote-1.0.0.apk`, остальные имеют суффикс ABI. DEX build cache отключён: при смене native classpath в AGP 8.5 локально наблюдались устаревшие архивы R-классов. Incremental/up-to-date проверки остаются доступны.
 
 ## Проверки и ограничения
 
