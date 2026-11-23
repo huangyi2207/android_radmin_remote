@@ -29,15 +29,19 @@ jobs:
         run: |
           node --check app/src/main/assets/www/app.js
           node --check app/src/main/assets/www/classroom.js
-      - name: Unit tests and debug APK
+      - name: Test APK ABI checker
+        run: python3 scripts/test-apk-abis.py
+      - name: Unit tests and debug APKs
         run: ./gradlew :app:testDebugUnitTest :app:assembleDebug --no-build-cache --stacktrace
+      - name: Verify all debug APK ABIs
+        run: python3 scripts/verify-apk-abis.py app/build/outputs/apk/debug --build-type debug
       - name: Native Xray smoke test (loopback only)
         run: python3 scripts/test-xray-native.py --download
-      - name: Upload developer debug APK
+      - name: Upload developer debug APKs
         uses: actions/upload-artifact@v4
         with:
-          name: developer-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: developer-debug-apks
+          path: app/build/outputs/apk/debug/app-*-debug.apk
           if-no-files-found: error
       - name: Prepare private release signing
         id: signing
@@ -45,22 +49,30 @@ jobs:
         env:
           ANDROID_RELEASE_SIGNING_B64: ${{ secrets.ANDROID_RELEASE_SIGNING_B64 }}
         run: python3 scripts/prepare-release-signing.py
-      - name: Build signed main APK
+      - name: Build signed main APKs
         if: steps.signing.outputs.ready == 'true'
         env:
           OPENRAD_SIGNING_PROPERTIES: ${{ steps.signing.outputs.propertiesFile }}
         run: |
           ./gradlew :app:assembleRelease --no-build-cache --stacktrace
+          python3 scripts/verify-apk-abis.py app/build/outputs/apk/release --build-type release
           mkdir -p build/release-apks
-          cp app/build/outputs/apk/release/app-release.apk build/release-apks/android-radmin-remote-1.0.0.apk
-          signer_digest=$("$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs build/release-apks/android-radmin-remote-1.0.0.apk | awk '/certificate SHA-256 digest:/ {print $NF; exit}')
-          test "$signer_digest" = "$(cat release-signing-certificate.sha256)"
-      - name: Upload signed main APK
+          expected_digest=$(<release-signing-certificate.sha256)
+          for abi in arm64-v8a armeabi-v7a x86_64 x86 universal; do
+            apk="build/release-apks/android-radmin-remote-1.0.0-$abi.apk"
+            if [ "$abi" = universal ]; then
+              apk="build/release-apks/android-radmin-remote-1.0.0.apk"
+            fi
+            cp "app/build/outputs/apk/release/app-$abi-release.apk" "$apk"
+            signer_digest=$("$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs "$apk" | awk '/certificate SHA-256 digest:/ {print $NF; exit}')
+            test "$signer_digest" = "$expected_digest"
+          done
+      - name: Upload signed main APKs
         if: steps.signing.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: android-radmin-remote-1.0.0
-          path: build/release-apks/android-radmin-remote-1.0.0.apk
+          path: build/release-apks/*.apk
           if-no-files-found: error
       - name: Upload test reports
         if: always()
@@ -78,10 +90,11 @@ jobs:
           name: Android Radmin Remote 1.0.0
           prerelease: false
           make_latest: true
-          files: build/release-apks/android-radmin-remote-1.0.0.apk
+          files: build/release-apks/*.apk
           fail_on_unmatched_files: true
           body: |
-            Stable 1.0.0. The user confirmed working VPN and Veyon classroom features on 0.4.2. Persistent checkbox dropdown selects displayed PCs; hidden PCs receive no thumbnails or batch commands.
+            Stable 1.0.0. Includes arm64-v8a, armeabi-v7a, x86_64 and x86 APKs, plus a universal APK (android-radmin-remote-1.0.0.apk) containing all four ABIs. Every APK uses the same permanent release certificate.
+            The user confirmed working VPN and Veyon classroom features on 0.4.2. Persistent checkbox dropdown selects displayed PCs; hidden PCs receive no thumbnails or batch commands.
             Adaptive 16:9 thumbnail rows fill the full width for 5 or 30 PCs. Top toolbar sends shutdown, reboot, lock/unlock, websites and files to the displayed group, with per-PC send results and cancellation. Screens continue refreshing after lock.
             Preserves Direct / SOCKS5 / embedded VLESS Reality TCP and gRPC VPN.
             Android package: ru.meshcheryakov.androidradminremote. Android 8.0+.
